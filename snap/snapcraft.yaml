@@ -1,0 +1,57 @@
+name: gunsnprices
+title: GunsNPrices
+version: '0.1.2'
+summary: Parse firearm and ammo product titles into brand, model and caliber
+description: |
+  gunsnprices turns firearm and ammunition product titles into structured
+  JSON: brand and model (for example Glock 19 Gen 5 MOS), caliber, magazine
+  capacity, barrel length, rounds per box and cost per round.
+
+  It uses the model dictionaries and caliber list behind GunsNPrices
+  (https://gunsnprices.com), a price comparison site for guns and ammunition.
+
+  Examples:
+
+      gunsnprices "Glock 19 Gen 5 9mm 15rd"
+      gunsnprices --price 18.99 "Federal American Eagle 9mm 115gr FMJ 50rd"
+      gunsnprices < titles.txt     # one title per line, JSON Lines out
+
+  Runs offline: no network access, no account, no data collection.
+
+  Code: MIT. Model and caliber data: CC BY 4.0, GunsNPrices (gunsnprices.com).
+  Python library and documentation:
+  https://github.com/gunsnprices/gunsnprices-python
+license: MIT AND CC-BY-4.0
+website: https://gunsnprices.com
+contact: app@gunsnprices.com
+issues: https://github.com/gunsnprices/gunsnprices-python/issues
+source-code: https://github.com/gunsnprices/gunsnprices-python
+icon: snap/gui/gunsnprices.png
+
+base: core24
+grade: stable
+confinement: strict
+
+apps:
+  gunsnprices:
+    command: bin/gunsnprices
+    environment:
+      PYTHONIOENCODING: utf-8
+    # No plugs: the tool only reads its arguments / stdin and writes stdout.
+
+parts:
+  gunsnprices:
+    plugin: python
+    # snap/local holds only requirements.txt: the exact PyPI release 0.1.2,
+    # pinned by the sha256 of its wheel and sdist (pip hash-checking mode).
+    source: snap/local
+    python-requirements:
+      - requirements.txt
+    # Skip the default pip/setuptools/wheel upgrade; the package is pure
+    # Python with no dependencies. On core24 with strict confinement the venv
+    # uses the base snap's /usr/bin/python3.12, so Python is not bundled.
+    python-packages: []
+    # Alternative: build from the GitHub tag instead of PyPI.
+    # source: https://github.com/gunsnprices/gunsnprices-python.git
+    # source-tag: v0.1.2
+    # (and drop python-requirements; the plugin then runs `pip install .`)

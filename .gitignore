@@ -1,0 +1,23 @@
+# snapcraft build output
+*.snap
+parts/
+stage/
+prime/
+.snapcraft/
+snap/.snapcraft/
+
+# store credentials from `snapcraft export-login` - never commit
+credentials.txt
+*.credentials
+*login*.txt
+
+# MacPorts / Python scratch
+*.tar.gz
+*.whl
+work/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+.DS_Store

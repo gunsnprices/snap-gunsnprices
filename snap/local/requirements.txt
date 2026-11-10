@@ -1,0 +1,7 @@
+# gunsnprices 0.1.2 from PyPI, pinned by sha256 (wheel, then sdist).
+# Any hash makes pip run in hash-checking mode. The package has no
+# dependencies. On a version bump, copy both hashes from
+# https://pypi.org/pypi/gunsnprices/<version>/json (digests.sha256).
+gunsnprices==0.1.2 \
+    --hash=sha256:7c5886760af4fb373cdc1d83100a7c08e3aafe4abd5062c6fe287f6cf244c558 \
+    --hash=sha256:595d6017c3dd2b9fbf7fdb04b595f9b7cea28142a8eea08649a95e85f18634f4

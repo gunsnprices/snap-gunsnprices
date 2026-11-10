@@ -1,0 +1,96 @@
+name: Snap
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and smoke-test the snap
+    runs-on: ubuntu-latest
+    outputs:
+      snap: ${{ steps.build.outputs.snap }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build with snapcraft (LXD)
+        id: build
+        uses: snapcore/action-build@v1
+
+      - name: Install the snap (unsigned local build)
+        run: |
+          sudo snap install --dangerous "${{ steps.build.outputs.snap }}"
+          echo /snap/bin >> "$GITHUB_PATH"
+          snap info --verbose "${{ steps.build.outputs.snap }}" | head -n 30
+
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+          gunsnprices --help
+          test "$(gunsnprices --version)" = "gunsnprices 0.1.2"
+
+          # Title as arguments -> pretty JSON
+          gunsnprices "Glock 19 Gen 5 9mm 15rd" | tee firearm.json
+          # Title on stdin -> JSON Lines, with cost per round
+          echo "Federal American Eagle 9mm 115gr FMJ 50rd" \
+            | gunsnprices --price 18.99 | tee ammo.jsonl
+
+          python3 - <<'PY'
+          import json
+          f = json.load(open("firearm.json", encoding="utf-8"))
+          assert f["kind"] == "firearm", f
+          assert f["brand"] == "Glock", f
+          assert f["model"]["model"] == "Glock 19 Gen 5", f
+          assert f["caliber"]["id"] == "9x19mmparabellum", f
+          assert f["capacity"] == 15, f
+          a = json.loads(open("ammo.jsonl", encoding="utf-8").readline())
+          assert a["kind"] == "ammo", a
+          assert a["caliber"]["id"] == "9x19mmparabellum", a
+          assert a["rounds"] == 50, a
+          assert abs(a["cost_per_round"] - 0.3798) < 1e-9, a
+          print("smoke test OK")
+          PY
+
+      - name: Upload the .snap
+        uses: actions/upload-artifact@v4
+        with:
+          name: gunsnprices-snap
+          path: ${{ steps.build.outputs.snap }}
+          if-no-files-found: error
+
+  # Store upload. DISABLED: `if: false` keeps this job from ever running.
+  # To enable after the name is registered (see PUBLISHING_snap.md):
+  #   1. snapcraft export-login --snaps=gunsnprices --channels=edge \
+  #        --acls package_access,package_push,package_update,package_release \
+  #        credentials.txt
+  #   2. Repo -> Settings -> Secrets and variables -> Actions -> new secret
+  #      SNAPCRAFT_STORE_CREDENTIALS = contents of credentials.txt
+  #   3. Replace `false` below with:
+  #      github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+  publish:
+    name: Upload to the Snap Store (edge)
+    needs: build
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    env:
+      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+    steps:
+      - name: Require the store credentials secret
+        if: env.SNAPCRAFT_STORE_CREDENTIALS == ''
+        run: |
+          echo "::error::Secret SNAPCRAFT_STORE_CREDENTIALS is not set"
+          exit 1
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: gunsnprices-snap
+
+      - uses: snapcore/action-publish@v1
+        with:
+          snap: ${{ needs.build.outputs.snap }}
+          release: edge
