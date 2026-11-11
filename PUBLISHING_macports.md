@@ -1,8 +1,12 @@
 # Submitting `py-gunsnprices` to MacPorts
 
-Status (2026-11-10): Portfile ready at `macports/python/py-gunsnprices/Portfile`. No fork,
-no PR. MacPorts is not installed on the dev Mac, so `port lint` and `port install` have not
-run yet. See "What was verified" below.
+Status (2026-11-11): Portfile at `macports/python/py-gunsnprices/Portfile`, Python 3.14 only.
+Tested with MacPorts 2.12.7 on macOS 27.0.1 (arm64, Command Line Tools 27.0): `port lint
+--nitpick` 0/0 for py-gunsnprices and py314-gunsnprices, `port test` 1191 passed,
+`port -vs install` OK, CLI and import OK. Trace mode (`-t`) does not work on macOS 27:
+darwintrace.dylib has no arm64e slice, so the system `tar` aborts. Local ports tree must be
+outside the home directory (MacPorts reads Portfiles as the `macports` user; home is 700):
+`/Users/Shared/gunsnprices-ports`. Test script: `~/ports/macports_test.sh`.
 
 After merge, https://ports.macports.org/port/py-gunsnprices/ shows **Homepage:
 https://gunsnprices.com**, taken from the Portfile's `homepage`.
