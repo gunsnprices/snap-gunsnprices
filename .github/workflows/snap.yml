@@ -63,19 +63,14 @@ jobs:
           path: ${{ steps.build.outputs.snap }}
           if-no-files-found: error
 
-  # Store upload. DISABLED: `if: false` keeps this job from ever running.
-  # To enable after the name is registered (see PUBLISHING_snap.md):
-  #   1. snapcraft export-login --snaps=gunsnprices --channels=edge \
-  #        --acls package_access,package_push,package_update,package_release \
-  #        credentials.txt
-  #   2. Repo -> Settings -> Secrets and variables -> Actions -> new secret
-  #      SNAPCRAFT_STORE_CREDENTIALS = contents of credentials.txt
-  #   3. Replace `false` below with:
-  #      github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+  # Store upload to `edge`. Runs only when the workflow is started by hand
+  # (Actions -> Snap -> Run workflow) on main. Needs the repository secret
+  # SNAPCRAFT_STORE_CREDENTIALS (from `snapcraft export-login`, see
+  # PUBLISHING_snap.md). Promote to stable with `snapcraft promote`.
   publish:
     name: Upload to the Snap Store (edge)
     needs: build
-    if: ${{ false }}
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
       SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
